@@ -19,6 +19,9 @@ FILE_LOADED = "File {fasta_file} validated and loaded!"
 FILE_ALREADY_LOADED = "File {fasta_file} already loaded!"
 INVALID_BASES = "File {fasta_file} could not be loaded. Sequence {sequence_id} contains invalid nucleotides."
 FILE_DUPLICATED = "File {fasta_file} could not be loaded. Sequence {sequence_id} is already in use."
+SEQUENCES_LOADED = "Number of sequences loaded: {num_sequences_loaded}"
+LIST_SEQUENCES = "- {sequence_id} ({num_bases} bp)"
+NOTHING_LOADED = "No sequences loaded."
 
 # --- Data Classes ---
 @dataclass
@@ -43,6 +46,19 @@ def load_enzymes(enzymes_data: str, enzymes_repo: list[Enzyme]) -> None:
         if len(temp_elements) == 3:
             enzyme = Enzyme(enzyme_name=temp_elements[0], recognition_site=temp_elements[1], cut_offset=temp_elements[2])
             enzymes_repo.append(enzyme)
+    return
+
+def count_bases(sequence: str) -> int:
+    return len(sequence)
+
+def list_sequences(sequences_repo: list[Sequence]) -> None:
+    if sequences_repo == []:
+        print(NOTHING_LOADED)
+        return
+    
+    print(SEQUENCES_LOADED.format(num_sequences_loaded= len(sequences_repo)))
+    for sequence in sequences_repo:
+        print(LIST_SEQUENCES.format(sequence_id=sequence.sequence_id, num_bases=count_bases(sequence.sequence)))
     return
 
 def valid_sequence(sequence: str) -> bool:
@@ -91,6 +107,7 @@ def load_sequences(command_args: list[str], sequences_repo: list[Sequence], fast
         if current_id != "":
             new_sequences.append(Sequence(sequence_id=current_id, sequence=current_parts))
 
+        # change this to a loop
         seen_ids = {seq.sequence_id for seq in sequences_repo}
 
         # Check for duplicate sequence IDs in the new sequences found
@@ -109,8 +126,10 @@ def command_runner(command_name: str, command_args: list[str], enzymes_repo: lis
     """Runs the command based on the command name and arguments"""
     if command_name == "LOAD_SEQUENCES":
         load_sequences(command_args, sequences_repo, fasta_repo)
-    #if command_name == "LIST_SEQUENCES":
-
+        return
+    if command_name == "LIST_SEQUENCES":
+        list_sequences(sequences_repo)
+        return
     #if command_name == "SEQUENCE_INFO":
 
     #if command_name == "FIND_SITES":
