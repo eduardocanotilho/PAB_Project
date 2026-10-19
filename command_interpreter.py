@@ -4,11 +4,12 @@ from dataclasses import dataclass
 
 # --- Constants ---
 DATA_FOLDER: str = "data"
+ENZYMES_FOLDER: str = "enzymes.txt"
 COMMAND_PROMPT: str = "Command to execute: "
 UNKNOWN_COMMAND: str = "Unknown command."
 COMMAND_EXIT: str = "Goodbye!"
 COMMANDS: list[str] = [
-    "LOAD_SEQUENCES", "LIST_SEQUENCES", "SEQUENCE_INFO", "FIND_SITES"
+    "LOAD_SEQUENCES", "LIST_SEQUENCES", "SEQUENCE_INFO", "FIND_SITES",
     "DIGEST", "EXIT"
     ]
 SEQUENCE_NOT_LOADED = "The sequence {sequence_id} is not loaded."
@@ -22,6 +23,12 @@ FILE_DUPLICATED = "File {fasta_file} could not be loaded. Sequence {sequence_id}
 SEQUENCES_LOADED = "Number of sequences loaded: {num_sequences_loaded}"
 LIST_SEQUENCES = "- {sequence_id} ({num_bases} bp)"
 NOTHING_LOADED = "No sequences loaded."
+FIND_ENZYME_NOT_LOADED = "The enzyme {enzyme_name} is not available."
+FIND_SEQUENCE_NOT_LOADED = "The sequence {sequence_id} is not loaded."
+RECOGNITION_SITES_NOT_FOUND = "The enzyme {enzyme_name} does not cut the sequence {sequence_id}."
+RECOGNITION_SITES_FOUND = "Recognition sites of {enzyme_name} ({sequence}) in the sequence {sequence_id}:"
+NUM_SITES_FOUND = "- Number of sites: {num_sites}."
+POSITIONS_FOUND = "- Positions: {positions}."
 
 # --- Data Classes ---
 @dataclass
@@ -49,9 +56,59 @@ def load_enzymes(enzymes_data: str, enzymes_repo: list[Enzyme]) -> None:
     return
 
 def count_bases(sequence: str) -> int:
+    """Counts the number of base pairs in a sequence"""
     return len(sequence)
 
+def find_enzyme_in_repo(command_args: list[str], enzymes_repo: list[Enzyme]) -> bool:
+    """Checks if an enzyme is in the enzymes repository"""
+    for enzyme in enzymes_repo:
+            if command_args[1] == enzyme.enzyme_name:
+                return True
+    print(FIND_ENZYME_NOT_LOADED.format(enzyme_name=command_args[1]))
+    return False
+
+def find_sequence_in_repo(command_args: list[str], sequences_repo: list[Sequence]) -> bool:
+    """Checks if a sequence is in the sequences repository"""
+    for seq in sequences_repo:
+            if command_args[0] == seq.sequence_id:
+                return True
+    print(FIND_SEQUENCE_NOT_LOADED.format(sequence_id=command_args[0]))
+    return False
+    
+def find_sites(command_args: list[str], enzymes_repo: list[Enzyme], sequences_repo: list[Sequence]) -> None:
+    """Finds the recognition sites of an enzyme in a sequence and prints the results"""
+    if not find_sequence_in_repo(command_args, sequences_repo):
+         return
+    if not find_enzyme_in_repo(command_args, enzymes_repo):
+         return
+    
+    sequence_to_look: str = ""
+    for seq in sequences_repo:
+         if command_args[0] == seq.sequence_id:
+              sequence_to_look = seq.sequence
+    
+    enzyme_recognition: str = ""
+    for enzyme in enzymes_repo:
+         if command_args[1] == enzyme.enzyme_name:
+              enzyme_recognition = enzyme.recognition_site
+
+    positions: list[int] = []
+    start = sequence_to_look.find(enzyme_recognition)
+    while start != -1:
+         positions.append(start + 1)
+         start = sequence_to_look.find(enzyme_recognition, start + 1)
+
+    if positions == []:
+         print(RECOGNITION_SITES_NOT_FOUND.format(enzyme_name=command_args[1], sequence_id=command_args[0]))
+         return
+    else:
+        print(RECOGNITION_SITES_FOUND.format(enzyme_name=command_args[1], sequence= enzyme_recognition, sequence_id=command_args[0]))
+        print(NUM_SITES_FOUND.format(num_sites=len(positions)))
+        print(POSITIONS_FOUND.format(positions=str(positions).strip("[").strip("]")))
+        return
+
 def list_sequences(sequences_repo: list[Sequence]) -> None:
+    """Lists all loaded sequences and their lengths (bps)"""
     if sequences_repo == []:
         print(NOTHING_LOADED)
         return
@@ -107,8 +164,9 @@ def load_sequences(command_args: list[str], sequences_repo: list[Sequence], fast
         if current_id != "":
             new_sequences.append(Sequence(sequence_id=current_id, sequence=current_parts))
 
-        # change this to a loop
-        seen_ids = {seq.sequence_id for seq in sequences_repo}
+        seen_ids: set[str] = set()
+        for seq in sequences_repo:
+            seen_ids.add(seq.sequence_id)
 
         # Check for duplicate sequence IDs in the new sequences found
         for seq in new_sequences:
@@ -132,8 +190,9 @@ def command_runner(command_name: str, command_args: list[str], enzymes_repo: lis
         return
     #if command_name == "SEQUENCE_INFO":
 
-    #if command_name == "FIND_SITES":
-
+    if command_name == "FIND_SITES":
+        find_sites(command_args, enzymes_repo, sequences_repo)
+        return
     #if command_name == "DIGEST":
 
 def command_interpreter(user_input: str) -> list[str, list[str]]:
@@ -168,7 +227,7 @@ def command_input(enzymes_repo: list[Enzyme]) -> None:
 def main() -> None:
     """Main function to load enzymes and start command input"""
     enzymes_repo: list[Enzyme] = []
-    file_path = os.path.join(DATA_FOLDER, "enzymes.txt")
+    file_path = os.path.join(DATA_FOLDER, ENZYMES_FOLDER)
     with open(file_path) as handle:
         enzymes_data = handle.read()
     load_enzymes(enzymes_data, enzymes_repo)
