@@ -23,12 +23,13 @@ FILE_DUPLICATED = "File {fasta_file} could not be loaded. Sequence {sequence_id}
 SEQUENCES_LOADED = "Number of sequences loaded: {num_sequences_loaded}"
 LIST_SEQUENCES = "- {sequence_id} ({num_bases} bp)"
 NOTHING_LOADED = "No sequences loaded."
-FIND_ENZYME_NOT_LOADED = "The enzyme {enzyme_name} is not available."
-FIND_SEQUENCE_NOT_LOADED = "The sequence {sequence_id} is not loaded."
 RECOGNITION_SITES_NOT_FOUND = "The enzyme {enzyme_name} does not cut the sequence {sequence_id}."
 RECOGNITION_SITES_FOUND = "Recognition sites of {enzyme_name} ({sequence}) in the sequence {sequence_id}:"
 NUM_SITES_FOUND = "- Number of sites: {num_sites}."
 POSITIONS_FOUND = "- Positions: {positions}."
+NO_FRAGS_PRODUCED = "The sequence {sequence_id} is not cut by the provided enzymes."
+FRAGS_PRODUCED = "Digestion of the sequence {sequence_id} with {enzyme_names} produced the following fragments:"
+LIST_FRAGS = "- {num_bases} bp (positions {start}-{end})"
 
 # --- Data Classes ---
 @dataclass
@@ -61,20 +62,81 @@ def count_bases(sequence: str) -> int:
 
 def find_enzyme_in_repo(command_args: list[str], enzymes_repo: list[Enzyme]) -> bool:
     """Checks if an enzyme is in the enzymes repository"""
+    enzymes_name_list: list[str] = []
     for enzyme in enzymes_repo:
-            if command_args[1] == enzyme.enzyme_name:
-                return True
-    print(FIND_ENZYME_NOT_LOADED.format(enzyme_name=command_args[1]))
-    return False
+        enzymes_name_list.append(enzyme.enzyme_name)
+
+    for arg in command_args[1:]:
+        if arg not in enzymes_name_list:
+            print(UNKNOWN_ENZYME.format(enzyme_name=command_args[1]))
+            return False
+    return True
 
 def find_sequence_in_repo(command_args: list[str], sequences_repo: list[Sequence]) -> bool:
     """Checks if a sequence is in the sequences repository"""
     for seq in sequences_repo:
             if command_args[0] == seq.sequence_id:
                 return True
-    print(FIND_SEQUENCE_NOT_LOADED.format(sequence_id=command_args[0]))
+    print(SEQUENCE_NOT_LOADED.format(sequence_id=command_args[0]))
     return False
+
+def find_cut_positions(sequence_to_look: str, enzyme_recognition: str) -> list[int]:
+    positions: list[int] = []
+    start = sequence_to_look.find(enzyme_recognition)
+    while start != -1:
+        positions.append(start + 1)
+        start = sequence_to_look.find(enzyme_recognition, start + 1)
+    return positions
+
+def digest_sequence(command_args: list[str], enzymes_repo: list[Enzyme], sequences_repo: list[Sequence]) -> None:
+    if not find_sequence_in_repo(command_args, sequences_repo):
+        return
+    if not find_enzyme_in_repo(command_args, enzymes_repo):
+        return
+
+    sequence_to_look: str = ""
+    for seq in sequences_repo:
+        if command_args[0] == seq.sequence_id:
+            sequence_to_look = seq.sequence
+
+    cut_points: list[int] = []
+
+    for enzyme_name in command_args[1:]:
+        enzyme_recognition: str = ""
+        enzyme_cut: int = 0
+        for enzyme in enzymes_repo:
+            if enzyme_name == enzyme.enzyme_name:
+                enzyme_recognition = enzyme.recognition_site
+                enzyme_cut = int(enzyme.cut_offset)
+                break
+
+        positions: list[int] = find_cut_positions(sequence_to_look, enzyme_recognition)
+        for position in positions:
+            cut_index: int = position + enzyme_cut - 1
+            if 0 < cut_index < len(sequence_to_look) and cut_index not in cut_points:
+                cut_points.append(cut_index)
+
+    fragments: list[str] = []
+    fragments_info: list[tuple[int]] = []
+    start: int = 0
+    cut_points.sort()
+    for cut_index in cut_points:
+        fragments.append(sequence_to_look[start:cut_index])
+        fragments_info.append((start + 1, cut_index, len(sequence_to_look[start:cut_index])))
+        start = cut_index
+    fragments.append(sequence_to_look[start:])
+    fragments_info.append((start + 1, start + len(sequence_to_look[start:]), len(sequence_to_look[start:])))
     
+    gel = sorted(fragments_info, key=lambda frag: (-frag[2], frag[0]))
+    if fragments != []:
+        print(FRAGS_PRODUCED.format(sequence_id=command_args[0],enzyme_names=", ".join(command_args[1:])))
+        for f in gel:
+            print(LIST_FRAGS.format(num_bases=f[2], start=f[0], end=f[1]))
+        return
+    else:
+        print(NO_FRAGS_PRODUCED.format(sequence_id=command_args[0]))
+        return
+
 def find_sites(command_args: list[str], enzymes_repo: list[Enzyme], sequences_repo: list[Sequence]) -> None:
     """Finds the recognition sites of an enzyme in a sequence and prints the results"""
     if not find_sequence_in_repo(command_args, sequences_repo):
@@ -91,12 +153,9 @@ def find_sites(command_args: list[str], enzymes_repo: list[Enzyme], sequences_re
     for enzyme in enzymes_repo:
          if command_args[1] == enzyme.enzyme_name:
               enzyme_recognition = enzyme.recognition_site
+              break
 
-    positions: list[int] = []
-    start = sequence_to_look.find(enzyme_recognition)
-    while start != -1:
-         positions.append(start + 1)
-         start = sequence_to_look.find(enzyme_recognition, start + 1)
+    positions = find_cut_positions(sequence_to_look, enzyme_recognition)
 
     if positions == []:
          print(RECOGNITION_SITES_NOT_FOUND.format(enzyme_name=command_args[1], sequence_id=command_args[0]))
@@ -193,7 +252,9 @@ def command_runner(command_name: str, command_args: list[str], enzymes_repo: lis
     if command_name == "FIND_SITES":
         find_sites(command_args, enzymes_repo, sequences_repo)
         return
-    #if command_name == "DIGEST":
+    if command_name == "DIGEST":
+        digest_sequence(command_args, enzymes_repo, sequences_repo)
+        return
 
 def command_interpreter(user_input: str) -> list[str, list[str]]:
     """Interprets user input and returns command name and arguments"""

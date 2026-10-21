@@ -1,0 +1,10 @@
+Command to execute: File lambda.fasta validated and loaded!
+Command to execute: File pUC19.fasta validated and loaded!
+Command to execute: File globins.fasta validated and loaded!
+Command to execute: Command to execute: Command to execute: Command to execute: Command to execute: Command to execute: Number of sequences loaded: 5
+- J02459.1 (48502 bp)
+- L09137.2 (2686 bp)
+- NM_000518.5 (628 bp)
+- NM_000558.5 (577 bp)
+- NM_000519.4 (620 bp)
+Command to execute: Goodbye!
