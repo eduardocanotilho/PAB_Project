@@ -23,6 +23,10 @@ FILE_DUPLICATED = "File {fasta_file} could not be loaded. Sequence ID {sequence_
 SEQUENCES_LOADED = "Number of sequences loaded: {num_sequences_loaded}"
 LIST_SEQUENCES = "- {sequence_id} ({num_bases} bp)"
 NOTHING_LOADED = "No sequences loaded."
+SEQUENCE_INFO = "Information about the sequence {sequence_id}:"
+SEQUENCE_LENGTH = "- Length: {num_bases} bp."
+SEQUENCE_BASES_COUNT = "- Base counts: A={A_count}, C={C_count}, G={G_count}, T={T_count}."
+SEQUENCE_GC_CONTENT = "- GC content: {gc_percentage}%."
 RECOGNITION_SITES_NOT_FOUND = "The enzyme {enzyme_name} does not cut the sequence {sequence_id}."
 RECOGNITION_SITES_FOUND = "Recognition sites of {enzyme_name} ({sequence}) in the sequence {sequence_id}:"
 NUM_SITES_FOUND = "- Number of sites: {num_sites}."
@@ -68,7 +72,7 @@ def find_enzyme_in_repo(command_args: list[str], enzymes_repo: list[Enzyme]) -> 
 
     for arg in command_args[1:]:
         if arg not in enzymes_name_list:
-            print(UNKNOWN_ENZYME.format(enzyme_name=command_args[1]))
+            print(UNKNOWN_ENZYME.format(enzyme_name=arg))
             return False
     return True
 
@@ -80,7 +84,35 @@ def find_sequence_in_repo(command_args: list[str], sequences_repo: list[Sequence
     print(SEQUENCE_NOT_LOADED.format(sequence_id=command_args[0]))
     return False
 
+def count_nucleotides_type(sequence: str) -> dict[str, int]:
+    nucleotide_counts: dict[str, int] = {"A": 0, "C": 0, "G": 0, "T": 0}
+
+    for nucleotide in sequence:
+        nucleotide_counts[nucleotide] += 1
+    return nucleotide_counts
+
+def sequence_info(command_args: list[str], sequences_repo: list[Sequence]) -> None:
+    if not find_sequence_in_repo(command_args, sequences_repo):
+        return
+    
+    sequence_to_look: str = ""
+    for seq in sequences_repo:
+        if command_args[0] == seq.sequence_id:
+            sequence_to_look = seq.sequence
+
+    print(SEQUENCE_INFO.format(sequence_id=command_args[0]))
+    sequence_length = count_bases(sequence_to_look)
+    print(SEQUENCE_LENGTH.format(num_bases = sequence_length))
+
+    nucleotide_counts = count_nucleotides_type(sequence_to_look)
+    print(SEQUENCE_BASES_COUNT.format(A_count=nucleotide_counts["A"], C_count=nucleotide_counts["C"], G_count=nucleotide_counts["G"], T_count=nucleotide_counts["T"]))
+
+    gc_content = ((nucleotide_counts["C"] + nucleotide_counts["G"]) * 100) / sequence_length
+    print(SEQUENCE_GC_CONTENT.format(gc_percentage=round(gc_content, 2)))
+
+
 def find_cut_positions(sequence_to_look: str, enzyme_recognition: str) -> list[int]:
+    """"""
     positions: list[int] = []
     start = sequence_to_look.find(enzyme_recognition)
     while start != -1:
@@ -89,6 +121,7 @@ def find_cut_positions(sequence_to_look: str, enzyme_recognition: str) -> list[i
     return positions
 
 def digest_sequence(command_args: list[str], enzymes_repo: list[Enzyme], sequences_repo: list[Sequence]) -> None:
+    """"""
     if not find_sequence_in_repo(command_args, sequences_repo):
         return
     if not find_enzyme_in_repo(command_args, enzymes_repo):
@@ -116,10 +149,15 @@ def digest_sequence(command_args: list[str], enzymes_repo: list[Enzyme], sequenc
             if 0 < cut_index < len(sequence_to_look) and cut_index not in cut_points:
                 cut_points.append(cut_index)
 
+    if cut_points == []:
+        print(NO_FRAGS_PRODUCED.format(sequence_id=command_args[0]))
+        return
+
     fragments: list[str] = []
     fragments_info: list[tuple[int]] = []
     start: int = 0
     cut_points.sort()
+
     for cut_index in cut_points:
         fragments.append(sequence_to_look[start:cut_index])
         fragments_info.append((start + 1, cut_index, len(sequence_to_look[start:cut_index])))
@@ -128,14 +166,11 @@ def digest_sequence(command_args: list[str], enzymes_repo: list[Enzyme], sequenc
     fragments_info.append((start + 1, start + len(sequence_to_look[start:]), len(sequence_to_look[start:])))
     
     gel = sorted(fragments_info, key=lambda frag: (-frag[2], frag[0]))
-    if fragments != []:
-        print(FRAGS_PRODUCED.format(sequence_id=command_args[0],enzyme_names=", ".join(command_args[1:])))
-        for f in gel:
-            print(LIST_FRAGS.format(num_bases=f[2], start=f[0], end=f[1]))
-        return
-    else:
-        print(NO_FRAGS_PRODUCED.format(sequence_id=command_args[0]))
-        return
+   
+    print(FRAGS_PRODUCED.format(sequence_id=command_args[0],enzyme_names=", ".join(command_args[1:])))
+    for f in gel:
+        print(LIST_FRAGS.format(num_bases=f[2], start=f[0], end=f[1]))
+    return
 
 def find_sites(command_args: list[str], enzymes_repo: list[Enzyme], sequences_repo: list[Sequence]) -> None:
     """Finds the recognition sites of an enzyme in a sequence and prints the results"""
@@ -166,6 +201,24 @@ def find_sites(command_args: list[str], enzymes_repo: list[Enzyme], sequences_re
         print(POSITIONS_FOUND.format(positions=str(positions).strip("[").strip("]")))
         return
 
+def alphabetic_sort(sequences_repo: list[Sequence]) -> list[Sequence]:
+    sorted_sequences_repo: list[Sequence] = []
+    sorted_names: list[str] = []
+    temp_list: list[str] = []
+
+    for seq in sequences_repo:
+        temp_list.append(seq.sequence_id)
+    sorted_names = sorted(temp_list)
+
+    index: int = 0
+    while len(sequences_repo) != len(sorted_sequences_repo):
+        for seq in sequences_repo:
+            if len(sequences_repo) != len(sorted_sequences_repo) and seq.sequence_id == sorted_names[index]:
+                sorted_sequences_repo.append(seq)
+                index += 1
+    return sorted_sequences_repo
+
+
 def list_sequences(sequences_repo: list[Sequence]) -> None:
     """Lists all loaded sequences and their lengths (bps)"""
     if sequences_repo == []:
@@ -173,7 +226,8 @@ def list_sequences(sequences_repo: list[Sequence]) -> None:
         return
     
     print(SEQUENCES_LOADED.format(num_sequences_loaded= len(sequences_repo)))
-    for sequence in sequences_repo:
+    sorted_sequences_repo = alphabetic_sort(sequences_repo)
+    for sequence in sorted_sequences_repo:
         print(LIST_SEQUENCES.format(sequence_id=sequence.sequence_id, num_bases=count_bases(sequence.sequence)))
     return
 
@@ -247,8 +301,9 @@ def command_runner(command_name: str, command_args: list[str], enzymes_repo: lis
     if command_name == "LIST_SEQUENCES":
         list_sequences(sequences_repo)
         return
-    #if command_name == "SEQUENCE_INFO":
-
+    if command_name == "SEQUENCE_INFO":
+        sequence_info(command_args, sequences_repo)
+        return
     if command_name == "FIND_SITES":
         find_sites(command_args, enzymes_repo, sequences_repo)
         return
