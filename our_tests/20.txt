@@ -5,20 +5,24 @@ Command to execute: File pUC19.fasta validated and loaded!
 Command to execute: File constructs.fasta validated and loaded!
 Command to execute: File demo.fasta validated and loaded!
 Command to execute: File globins.fasta validated and loaded!
-Command to execute: File duplicate_ids.fasta could not be loaded. Sequence pLac_frag is already in use.
+Command to execute: File duplicate_ids.fasta could not be loaded. Sequence ID pLac_frag is already in use.
 Command to execute: Number of sequences loaded: 11
-- J02459.1 (48502 bp)
 - J01749.1 (4361 bp)
-- NC_001669.1 (5243 bp)
+- J02459.1 (48502 bp)
 - L09137.2 (2686 bp)
-- pGFP_insert (240 bp)
-- pLac_frag (180 bp)
+- NC_001669.1 (5243 bp)
+- NM_000518.5 (628 bp)
+- NM_000519.4 (620 bp)
+- NM_000558.5 (577 bp)
 - amp_cassette (150 bp)
 - demo (20 bp)
-- NM_000518.5 (628 bp)
-- NM_000558.5 (577 bp)
-- NM_000519.4 (620 bp)
-Command to execute: Command to execute: Recognition sites of HindIII (AAGCTT) in the sequence J02459.1:
+- pGFP_insert (240 bp)
+- pLac_frag (180 bp)
+Command to execute: Information about the sequence J02459.1:
+- Length: 48502 bp.
+- Base counts: A=12334, C=11362, G=12820, T=11986.
+- GC content: 49.86%.
+Command to execute: Recognition sites of HindIII (AAGCTT) in the sequence J02459.1:
 - Number of sites: 6.
 - Positions: 23130, 25157, 27479, 36895, 37459, 44141.
 Command to execute: Digestion of the sequence J02459.1 with EcoRI produced the following fragments:
@@ -98,9 +102,8 @@ Command to execute: Digestion of the sequence NM_000518.5 with EcoRI, BamHI prod
 - 347 bp (positions 1-347)
 - 214 bp (positions 415-628)
 - 67 bp (positions 348-414)
-Command to execute: Digestion of the sequence demo with BamHI, XhoI produced the following fragments:
-- 20 bp (positions 1-20)
-Command to execute: The enzyme BamHI is not available.
+Command to execute: The sequence demo is not cut by the provided enzymes.
+Command to execute: The enzyme EcoRX is not available.
 Command to execute: The sequence nothere is not loaded.
 Command to execute: The sequence ecori is not loaded.
 Command to execute: Digestion of the sequence J02459.1 with BamHI, EcoRI, EcoRV, HindIII, KpnI, NotI, PstI, SmaI, XbaI, XhoI produced the following fragments:
