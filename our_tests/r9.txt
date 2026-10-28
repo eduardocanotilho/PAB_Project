@@ -1,3 +1,0 @@
-Command to execute: Command to execute: File demo.fasta validated and loaded!
-Command to execute: Command to execute: File constructs.fasta validated and loaded!
-Command to execute: Command to execute: Command to execute: Command to execute: Command to execute: Goodbye!

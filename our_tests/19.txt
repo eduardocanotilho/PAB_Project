@@ -2,11 +2,15 @@ Command to execute: The sequence demo is not loaded.
 Command to execute: File demo.fasta validated and loaded!
 Command to execute: File constructs.fasta validated and loaded!
 Command to execute: Number of sequences loaded: 4
+- amp_cassette (150 bp)
 - demo (20 bp)
 - pGFP_insert (240 bp)
 - pLac_frag (180 bp)
-- amp_cassette (150 bp)
-Command to execute: Command to execute: Recognition sites of EcoRI (GAATTC) in the sequence demo:
+Command to execute: Information about the sequence pGFP_insert:
+- Length: 240 bp.
+- Base counts: A=73, C=63, G=51, T=53.
+- GC content: 47.5%.
+Command to execute: Recognition sites of EcoRI (GAATTC) in the sequence demo:
 - Number of sites: 2.
 - Positions: 3, 13.
 Command to execute: Digestion of the sequence demo with EcoRI produced the following fragments:
@@ -20,8 +24,7 @@ Command to execute: Digestion of the sequence pLac_frag with EcoRI produced the 
 - 125 bp (positions 17-141)
 - 39 bp (positions 142-180)
 - 16 bp (positions 1-16)
-Command to execute: Digestion of the sequence pLac_frag with BamHI produced the following fragments:
-- 180 bp (positions 1-180)
+Command to execute: The sequence pLac_frag is not cut by the provided enzymes.
 Command to execute: The enzyme EcoRX is not available.
 Command to execute: Digestion of the sequence pGFP_insert with EcoRI, HindIII produced the following fragments:
 - 180 bp (positions 31-210)
@@ -38,10 +41,9 @@ Command to execute: Digestion of the sequence amp_cassette with PstI, SmaI, PstI
 - 87 bp (positions 64-150)
 - 38 bp (positions 26-63)
 - 25 bp (positions 1-25)
-Command to execute: Digestion of the sequence amp_cassette with EcoRI, BamHI produced the following fragments:
-- 150 bp (positions 1-150)
-Command to execute: The enzyme EcoRI is not available.
-Command to execute: The enzyme KpnI is not available.
+Command to execute: The sequence amp_cassette is not cut by the provided enzymes.
+Command to execute: The enzyme EcoRX is not available.
+Command to execute: The enzyme EcoRX is not available.
 Command to execute: Digestion of the sequence pGFP_insert with EcoRI, HindIII, BamHI, NotI produced the following fragments:
 - 89 bp (positions 122-210)
 - 49 bp (positions 73-121)
